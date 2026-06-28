@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Navegue</title>
+<style>:root{--bg:#0b1220;--card:#1f2937;--accent:#8b5cf6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#e5e7eb;font-family:system-ui}header{position:sticky;top:0;background:#111827;padding:14px}h1{margin:0 0 10px;font-size:22px;display:flex;gap:8px}.search{position:relative;display:flex;gap:8px}input{flex:1;padding:12px 40px 12px 12px;border-radius:12px;border:1px solid #374151;background:#0f172a;color:#fff;font-size:15px}.clear{position:absolute;right:108px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;font-size:20px;cursor:pointer;display:none}button{padding:12px 16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}.tabs{display:flex;gap:8px;margin:12px 14px;overflow:auto}.tab{padding:8px 14px;border-radius:20px;background:#1f2937;color:#9ca3af;cursor:pointer}.tab.active{background:var(--accent);color:#fff}main{padding:0 14px 40px}.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}.result-title{font-weight:600;margin-bottom:6px}.result-link{color:#8b5cf6;font-size:13px;text-decoration:none}.news{display:flex;gap:12px}.news img{width:90px;height:70px;object-fit:cover;border-radius:8px}</style>
+</head>
+<body>
+<header><h1>🌐 Navegue</h1><div class="search"><input id="q" placeholder="Pesquisar..."><button class="clear" id="clear">×</button><button id="go">Buscar</button></div></header>
+<div class="tabs"><div class="tab active" data-t="web">Buscar</div><div class="tab" data-t="news">Notícias</div><div class="tab" data-t="video">Vídeos</div><div class="tab" data-t="clima">Clima</div></div>
+<main id="out"><div style="opacity:.7;text-align:center;padding:20px">Digite e toque em Buscar</div></main>
+<script>
+const out=document.getElementById('out'),q=document.getElementById('q'),clear=document.getElementById('clear');let tab='web';
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');tab=t.dataset.t;if(q.value)buscar()});
+document.getElementById('go').onclick=buscar;q.onkeydown=e=>e.key==='Enter'&&buscar();q.oninput=()=>clear.style.display=q.value?'block':'none';clear.onclick=()=>{q.value='';clear.style.display='none';out.innerHTML='<div style="opacity:.7;text-align:center;padding:20px">Digite e toque em Buscar</div>'};
+
+async function buscar(){
+    const query=q.value.trim();
+    if(!query)return;
+    out.innerHTML='Carregando...';
+    
+    try {
+        if(tab==='web'){
+            let h='';
+            const w=await fetch(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`).then(r=>r.ok?r.json():null);
+            if(w&&w.extract)h+=`<div class="card"><div class="result-title">${w.title}</div><div>${w.extract}</div><a class="result-link" href="${w.content_urls.desktop.page}" target="_blank">Ver na Wikipedia →</a></div>`;
+            h+=`<div class="card"><a class="result-link" href="https://www.google.com/search?q=${encodeURIComponent(query)}&hl=pt-BR" target="_blank">Google →</a></div>`;
+            out.innerHTML=h;
+        } 
+        else if(tab==='news'){
+            const d=await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://news.google.com/rss/search?q=' + query + '&hl=pt-BR&gl=BR&ceid=BR:pt-419')}`).then(r=>r.json());
+            if (d.items && d.items.length > 0) {
+                out.innerHTML=d.items.slice(0,12).map(i=>`<div class="card news"><img src="${i.thumbnail||'https://via.placeholder.com/90'}" onerror="this.style.display='none'"><div><div class="result-title">${i.title}</div><a class="result-link" href="${i.link}" target="_blank">Ler →</a></div></div>`).join('');
+            } else {
+                out.innerHTML='<div class="card">Nenhuma notícia encontrada.</div>';
+            }
+        } 
+        else if(tab==='video'){
+            out.innerHTML=`<div class="card"><a class="result-link" href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&hl=pt" target="_blank">YouTube →</a></div>`;
+        } 
+        else if(tab==='clima'){
+            const d=await fetch(`https://wttr.in/${encodeURIComponent(query||'Bom Jesus dos Perdoes')}?format=j1&lang=pt`).then(r=>r.json());
+            const c=d.current_condition[0];
+            const desc = c.lang_pt ? c.lang_pt[0].value : c.weatherDesc[0].value;
+            out.innerHTML=`<div class="card"><div class="result-title">${query}</div>${c.temp_C}°C - ${desc}</div>`;
+        }
+    } catch (error) {
+        out.innerHTML = '<div class="card">Erro ao carregar dados. Tente novamente.</div>';
+    }
+}
+</script>
+</body>
+</html>
