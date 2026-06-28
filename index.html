@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Navegue</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111827">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <style>:root{--bg:#0b1220;--card:#1f2937;--accent:#8b5cf6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#e5e7eb;font-family:system-ui}header{position:sticky;top:0;background:#111827;padding:14px}h1{margin:0 0 10px;font-size:22px;display:flex;gap:8px}.search{position:relative;display:flex;gap:8px}input{flex:1;padding:12px 40px 12px 12px;border-radius:12px;border:1px solid #374151;background:#0f172a;color:#fff;font-size:15px}.clear{position:absolute;right:108px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;font-size:20px;cursor:pointer;display:none}button{padding:12px 16px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}.tabs{display:flex;gap:8px;margin:12px 14px;overflow:auto}.tab{padding:8px 14px;border-radius:20px;background:#1f2937;color:#9ca3af;cursor:pointer}.tab.active{background:var(--accent);color:#fff}main{padding:0 14px 40px}.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}.result-title{font-weight:600;margin-bottom:6px}.result-link{color:#8b5cf6;font-size:13px;text-decoration:none}.news{display:flex;gap:12px}.news img{width:90px;height:70px;object-fit:cover;border-radius:8px}</style>
 </head>
 <body>
@@ -47,6 +54,15 @@ async function buscar(){
     } catch (error) {
         out.innerHTML = '<div class="card">Erro ao carregar dados. Tente novamente.</div>';
     }
+}
+
+// Ativação automática do Service Worker para permitir a instalação do aplicativo
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker ativo para PWA', reg))
+            .catch(err => console.log('Erro ao carregar Service Worker', err));
+    });
 }
 </script>
 </body>
