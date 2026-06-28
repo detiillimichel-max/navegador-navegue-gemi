@@ -1,27 +1,41 @@
-const CACHE_NAME = 'navegue-v1';
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
-];
+const CACHE_NAME = 'navegue-v2'; // Mudámos a versão para forçar a atualização do telemóvel
 
-// Instala o Service Worker e salva os arquivos básicos no cache
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Força a instalação imediata do novo motor
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(['./', './index.html', './manifest.json']);
+    })
   );
 });
 
-// Intercepta as requisições para o app funcionar mais rápido
+self.addEventListener('activate', event => {
+  // Limpa o lixo (cache antigo) que estava a esconder a barra de pesquisa
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+});
+
 self.addEventListener('fetch', event => {
+  // Nova Regra: Tenta carregar sempre a versão mais recente da internet primeiro.
+  // Se estiver sem internet (offline), aí sim ele usa a versão guardada.
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        if (response) {
-          return response; // Retorna do cache se encontrar
-        }
-        return fetch(event.request); // Senão, busca na internet
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
       })
+      .catch(() => caches.match(event.request))
   );
 });
